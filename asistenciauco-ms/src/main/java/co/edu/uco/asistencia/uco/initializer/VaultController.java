@@ -1,4 +1,4 @@
-package co.edu.uco.asistencia.uco.controller;
+package co.edu.uco.asistencia.uco.initializer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,16 +27,16 @@ public class VaultController {
     }
 
     @GetMapping("/vault/secret")
-    public Mono<String> getSecret() {
-        return webClient.get()
-                .uri(vaultUrl + "/v1/" + secretPath)
+    public String getSecret() {
+        JsonNode json = webClient.get()
+                .uri(vaultUrl + "/v1/secret/data/" + secretPath)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + vaultToken)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .map(json -> {
-                    String valor = json.at("/data/data/test").asText("NO-SECRET-FOUND");
-                    System.out.println("🔐 Secreto recibido desde Vault: " + valor);
-                    return valor;
-                });
+                .block(); // Bloqueamos para obtener el resultado sin Mono<String>
+
+        String valor = json.at("/data/data/test").asText("NO-SECRET-FOUND");
+        System.out.println("🔐 Secreto recibido desde Vault: " + valor);
+        return valor;
     }
 }
